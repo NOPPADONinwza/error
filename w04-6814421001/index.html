@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบฟอร์มบันทึกกิจกรรมนักศึกษา</title>
+    
+    <!-- 1. นำเข้า Tailwind CSS (สำคัญมาก ถ้าไม่มีบรรทัดนี้หน้าเว็บจะไม่สวย) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. นำเข้า Alpine.js (สำหรับการตรวจสอบฟอร์ม) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- 3. ลิงก์ไฟล์ CSS ของคุณ (ต้องเช็กว่าพาทถูกต้อง) -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- สไตล์เพิ่มเติม (เผื่อไว้ให้แสดงผลได้ทันที) -->
+    <style>
+        [x-cloak] { display: none !important; }
+        .form-input {
+            width: 100%; border-radius: 0.5rem; border: 1px solid #d1d5db;
+            background-color: #ffffff; padding: 0.625rem 1rem; font-size: 0.875rem;
+            color: #374151; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .form-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .form-label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
+        .input-error { border-color: #ef4444 !important; }
+        .input-error:focus { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important; }
+        .error-msg { margin-top: 0.25rem; display: block; font-size: 0.75rem; color: #dc2626; }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 md:p-8 font-sans antialiased text-gray-800">
+
+<div class="mx-auto max-w-4xl">
+    <div class="mb-8 text-center">
+        <h1 class="text-2xl font-bold text-gray-900 md:text-3xl">แบบฟอร์มบันทึกกิจกรรมนักศึกษา</h1>
+    </div>
+
+    <!-- ฟอร์มที่แก้ไขแล้ว -->
+    <form action="w04-bio.php" method="POST" 
+        x-data="{ 
+            submitted: false,
+            studentName: '', studentId: '', faculty: '', major: '', phone: '', advisor: '',
+            activityDate: '', startTime: '', endTime: '', duration: '', activity1: '', activity2: '', activity3: '',
+            image1: null, image2: null 
+        }" 
+        @submit.prevent="submitted = true; if(studentName.length>0 && studentId.length>=11 && faculty!=='' && major.length>0 && phone.length===10 && advisor.length>0 && activityDate!=='' && startTime!=='' && endTime!=='' && duration>0 && activity1.length>0) { $el.submit(); } else { alert('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน'); }" 
+        class="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-8">
+
+        <fieldset class="space-y-4">
+            <legend class="mb-4 text-lg font-semibold text-gray-900">1. ข้อมูลส่วนตัว</legend>
+            
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <!-- ชื่อ-นามสกุล -->
+                <div>
+                    <label class="form-label">ด้วยข้าพเจ้า (นาย/นาง/นางสาว) <span class="text-red-500">*</span></label>
+                    <input type="text" name="studentName" x-model="studentName" 
+                           :class="(submitted || studentName.length > 0) && studentName.length === 0 ? 'input-error' : ''" 
+                           class="form-input" placeholder="กรอกชื่อ-นามสกุล" />
+                    <small x-show="(submitted || studentName.length > 0) && studentName.length === 0" x-text="'กรุณากรอกชื่อ-นามสกุล'" class="error-msg" x-cloak></small>
+                </div>
+
+                <!-- รหัสนักศึกษา -->
+                <div>
+                    <label class="form-label">รหัสนักศึกษา (ตัวเลข 11 หลักขึ้นไป) <span class="text-red-500">*</span></label>
+                    <input type="text" name="studentId" x-model="studentId" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                           :class="(submitted || studentId.length > 0) && studentId.length < 11 ? 'input-error' : ''" 
+                           class="form-input" placeholder="กรอกรหัสนักศึกษา" />
+                    <small x-show="(submitted || studentId.length > 0) && studentId.length < 11" x-text="studentId.length === 0 ? 'กรุณากรอกรหัสนักศึกษา' : 'รหัสนักศึกษาต้องเป็นตัวเลข 11 หลักขึ้นไป'" class="error-msg" x-cloak></small>
+                </div>
+
+                <!-- คณะ -->
+                <div>
+                    <label class="form-label">คณะ <span class="text-red-500">*</span></label>
+                    <select name="faculty" x-model="faculty" :class="submitted && faculty === '' ? 'input-error' : ''" class="form-input">
+                        <option value="" disabled selected>เลือกคณะ...</option>
+                        <optgroup label="กลุ่มคณะมนุษยศาสตร์และสังคมศาสตร์">
+                            <option value="คณะครุศาสตร์">คณะครุศาสตร์</option>
+                            <option value="คณะมนุษยศาสตร์และสังคมศาสตร์">คณะมนุษยศาสตร์และสังคมศาสตร์</option>
+                            <option value="คณะนิติศาสตร์">คณะนิติศาสตร์</option>
+                            <option value="คณะนิเทศศาสตร์">คณะนิเทศศาสตร์</option>
+                        </optgroup>
+                        <optgroup label="กลุ่มคณะวิทยาศาสตร์และเทคโนโลยี">
+                            <option value="คณะวิทยาศาสตร์และเทคโนโลยี">คณะวิทยาศาสตร์และเทคโนโลยี</option>
+                            <option value="คณะวิทยาการคอมพิวเตอร์และเทคโนโลยีสารสนเทศ">คณะวิทยาการคอมพิวเตอร์และเทคโนโลยีสารสนเทศ</option>
+                            <option value="คณะเทคโนโลยีการเกษตร">คณะเทคโนโลยีการเกษตร</option>
+                            <option value="คณะวิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม">คณะวิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม</option>
+                        </optgroup>
+                        <optgroup label="กลุ่มคณะวิทยาการจัดการและอื่นๆ">
+                            <option value="คณะวิทยาการจัดการ">คณะวิทยาการจัดการ</option>
+                            <option value="คณะพยาบาลศาสตร์">คณะพยาบาลศาสตร์</option>
+                        </optgroup>
+                    </select>
+                    <small x-show="submitted && faculty === ''" x-text="'กรุณาเลือกคณะ'" class="error-msg" x-cloak></small>
+                </div>
+
+                <!-- สาขาวิชา -->
+                <div>
+                    <label class="form-label">สาขาวิชา <span class="text-red-500">*</span></label>
+                    <input type="text" name="major" x-model="major" 
+                           :class="(submitted || major.length > 0) && major.length === 0 ? 'input-error' : ''" 
+                           class="form-input" placeholder="กรอกสาขาวิชา" />
+                    <small x-show="(submitted || major.length > 0) && major.length === 0" x-text="'กรุณากรอกสาขาวิชา'" class="error-msg" x-cloak></small>
+                </div>
+
+                <!-- เบอร์โทรศัพท์ -->
+                <div>
+                    <label class="form-label">โทรศัพท์มือถือ (10 หลัก) <span class="text-red-500">*</span></label>
+                    <input type="text" name="phone" x-model="phone" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                           :class="(submitted || phone.length > 0) && phone.length !== 10 ? 'input-error' : ''" 
+                           class="form-input" placeholder="กรอกเบอร์โทรศัพท์" />
+                    <small x-show="(submitted || phone.length > 0) && phone.length !== 10" x-text="phone.length === 0 ? 'กรุณากรอกเบอร์โทรศัพท์' : 'เบอร์โทรศัพท์ต้องมี 10 หลัก'" class="error-msg" x-cloak></small>
+                </div>
+
+                <!-- อาจารย์ที่ปรึกษา -->
+                <div>
+                    <label class="form-label">อาจารย์ที่ปรึกษา <span class="text-red-500">*</span></label>
+                    <input type="text" name="advisor" x-model="advisor" list="advisorList" 
+                           :class="(submitted || advisor.length > 0) && advisor.length === 0 ? 'input-error' : ''" 
+                           class="form-input" placeholder="พิมพ์หรือเลือกอาจารย์ที่ปรึกษา" />
+                    <datalist id="advisorList">
+                        <option value="ผศ.ดร.สมชาย ใจดี"></option>
+                        <option value="รศ.ดร.สมหญิง รักเรียน"></option>
+                        <option value="อ.ดร.วิชัย สุขสันต์"></option>
+                    </datalist>
+                    <small x-show="(submitted || advisor.length > 0) && advisor.length === 0" x-text="'กรุณาระบุอาจารย์ที่ปรึกษา'" class="error-msg" x-cloak></small>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ส่วนที่ 2: ข้อมูลกิจกรรม -->
+        <div x-data="{ open: true }" class="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+            <button type="button" @click="open = !open" class="flex w-full items-center justify-between bg-gray-100 px-6 py-4 text-left font-semibold text-gray-800 transition hover:bg-gray-200">
+                <span>2. รายละเอียดกิจกรรม</span>
+                <svg :class="{'rotate-180': open}" class="h-5 w-5 transform transition-transform text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div x-show="open" x-collapse x-cloak class="px-6 py-4 space-y-4">
+                
+                <div>
+                    <label class="form-label">ในวันที่ <span class="text-red-500">*</span></label>
+                    <input type="date" name="activityDate" x-model="activityDate" :class="submitted && activityDate === '' ? 'input-error' : ''" class="form-input" />
+                    <small x-show="submitted && activityDate === ''" x-text="'กรุณาเลือกวันที่'" class="error-msg" x-cloak></small>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label class="form-label">ตั้งแต่เวลา <span class="text-red-500">*</span></label>
+                        <input type="time" name="startTime" x-model="startTime" :class="submitted && startTime === '' ? 'input-error' : ''" class="form-input" />
+                        <small x-show="submitted && startTime === ''" x-text="'กรุณาระบุเวลาเริ่ม'" class="error-msg" x-cloak></small>
+                    </div>
+                    <div>
+                        <label class="form-label">ถึงเวลา <span class="text-red-500">*</span></label>
+                        <input type="time" name="endTime" x-model="endTime" :class="submitted && endTime === '' ? 'input-error' : ''" class="form-input" />
+                        <small x-show="submitted && endTime === ''" x-text="'กรุณาระบุเวลาสิ้นสุด'" class="error-msg" x-cloak></small>
+                    </div>
+                    <div>
+                        <label class="form-label">รวมเป็น (ชั่วโมง) <span class="text-red-500">*</span></label>
+                        <input type="number" name="duration" x-model="duration" :class="(submitted || duration.length > 0) && (duration === '' || duration <= 0) ? 'input-error' : ''" class="form-input" placeholder="ระบุจำนวนชั่วโมง" />
+                        <small x-show="(submitted || duration.length > 0) && (duration === '' || duration <= 0)" x-text="'กรุณาระบุจำนวนชั่วโมง (มากกว่า 0)'" class="error-msg" x-cloak></small>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">ลักษณะกิจกรรม/งานที่ได้รับมอบหมาย (1) <span class="text-red-500">*</span></label>
+                    <textarea name="activity1" x-model="activity1" :class="(submitted || activity1.length > 0) && activity1.length === 0 ? 'input-error' : ''" rows="2" class="form-input" placeholder="อธิบายลักษณะกิจกรรม..."></textarea>
+                    <small x-show="(submitted || activity1.length > 0) && activity1.length === 0" x-text="'กรุณากรอกรายละเอียดกิจกรรม'" class="error-msg" x-cloak></small>
+                </div>
+                <div>
+                    <label class="form-label">(2)</label>
+                    <textarea name="activity2" x-model="activity2" rows="2" class="form-input" placeholder="ระบุเพิ่มเติม (ถ้ามี)"></textarea>
+                </div>
+                <div>
+                    <label class="form-label">(3)</label>
+                    <textarea name="activity3" x-model="activity3" rows="2" class="form-input" placeholder="ระบุเพิ่มเติม (ถ้ามี)"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ส่วนที่ 3: รูปภาพประกอบ -->
+        <fieldset class="space-y-4">
+            <legend class="mb-4 text-lg font-semibold text-gray-900">3. รูปภาพประกอบ</legend>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                    <label class="form-label">ภาพที่ 1</label>
+                    <input type="file" id="image1" @change="image1 = $event.target.files[0]" accept="image/*" class="form-input" />
+                    <template x-if="image1">
+                        <output class="mt-2 block text-xs text-gray-500">ไฟล์ที่เลือก: <span x-text="image1.name"></span></output>
+                    </template>
+                </div>
+                <div>
+                    <label class="form-label">ภาพที่ 2</label>
+                    <input type="file" id="image2" @change="image2 = $event.target.files[0]" accept="image/*" class="form-input" />
+                    <template x-if="image2">
+                        <output class="mt-2 block text-xs text-gray-500">ไฟล์ที่เลือก: <span x-text="image2.name"></span></output>
+                    </template>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="border-t border-gray-200 pt-6">
+            <p class="mb-6 text-sm text-gray-600">ข้าพเจ้าขอรับรองว่า การบำเพ็ญประโยชน์ของนักศึกษา ได้ดำเนินกิจกรรม ดังกล่าวจริง</p>
+            
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" @click="submitted = false; studentName=''; studentId=''; faculty=''; major=''; phone=''; advisor=''; activityDate=''; startTime=''; endTime=''; duration=''; activity1=''; activity2=''; activity3=''; image1=null; image2=null; document.getElementById('image1').value=''; document.getElementById('image2').value='';" class="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">รีเซ็ต</button>
+                <button type="submit" class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>
